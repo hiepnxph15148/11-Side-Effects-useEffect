@@ -7,10 +7,15 @@ import DeleteConfirmation from './components/DeleteConfirmation.jsx';
 import logoImg from './assets/logo.png';
 import { sortPlacesByDistance } from './loc.js';
 function App() {
+  const storedIds = JSON.parse(localStorage.getItem('selectedPlaces')) || [];
+  const storedPlaces = storedIds.map((id)=>{
+    return AVAILABLE_PLACES.find((place) => place.id === id);
+  })
   const modal = useRef();
   const selectedPlace = useRef();
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [availablePlaces, setAvailablePlaces] = useState([]);
-  const [pickedPlaces, setPickedPlaces] = useState([]);
+  const [pickedPlaces, setPickedPlaces] = useState(storedPlaces);
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition((position) => {
@@ -25,12 +30,12 @@ function App() {
 
 
   function handleStartRemovePlace(id) {
-    modal.current.open();
+    setIsModalOpen(true);
     selectedPlace.current = id;
   }
 
   function handleStopRemovePlace() {
-    modal.current.close();
+    setIsModalOpen(false);
   }
 
   function handleSelectPlace(id) {
@@ -41,18 +46,32 @@ function App() {
       const place = AVAILABLE_PLACES.find((place) => place.id === id);
       return [place, ...prevPickedPlaces];
     });
+    // Lấy danh sách ID đã lưu trữ từ localStorage
+    const storedIds = JSON.parse(localStorage.getItem('selectedPlaces')) || [];
+
+    // Nếu ID chưa có trong danh sách, thêm nó và cập nhật localStorage
+    if (storedIds.indexOf(id) === -1) {
+      const updatedStoredIds = [id, ...storedIds];
+      localStorage.setItem('selectedPlaces', JSON.stringify(updatedStoredIds)); // Lưu danh sách đã cập nhật vào localStorage
+    }
   }
 
   function handleRemovePlace() {
     setPickedPlaces((prevPickedPlaces) =>
       prevPickedPlaces.filter((place) => place.id !== selectedPlace.current)
     );
-    modal.current.close();
+    setIsModalOpen(false);
+    // Lấy danh sách ID từ localStorage và xóa ID đã chọn
+    const storedIds = JSON.parse(localStorage.getItem('selectedPlaces')) || [];
+    const updatedStoredIds = storedIds.filter((id) => id !== selectedPlace.current);
+
+    // Lưu lại danh sách sau khi xóa ID vào localStorage
+    localStorage.setItem('selectedPlaces', JSON.stringify(updatedStoredIds));
   }
 
   return (
     <>
-      <Modal ref={modal}>
+      <Modal open={isModalOpen} onClose={handleStopRemovePlace}>
         <DeleteConfirmation
           onCancel={handleStopRemovePlace}
           onConfirm={handleRemovePlace}
