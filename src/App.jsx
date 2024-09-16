@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import Places from './components/Places.jsx';
 import { AVAILABLE_PLACES } from './data.js';
@@ -11,7 +11,6 @@ function App() {
   const storedPlaces = storedIds.map((id)=>{
     return AVAILABLE_PLACES.find((place) => place.id === id);
   })
-  const modal = useRef();
   const selectedPlace = useRef();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [availablePlaces, setAvailablePlaces] = useState([]);
@@ -56,18 +55,20 @@ function App() {
     }
   }
 
-  function handleRemovePlace() {
+  const handleRemovePlace = useCallback( function handleRemovePlace() {
     setPickedPlaces((prevPickedPlaces) =>
       prevPickedPlaces.filter((place) => place.id !== selectedPlace.current)
     );
     setIsModalOpen(false);
+    
     // Lấy danh sách ID từ localStorage và xóa ID đã chọn
     const storedIds = JSON.parse(localStorage.getItem('selectedPlaces')) || [];
     const updatedStoredIds = storedIds.filter((id) => id !== selectedPlace.current);
 
     // Lưu lại danh sách sau khi xóa ID vào localStorage
     localStorage.setItem('selectedPlaces', JSON.stringify(updatedStoredIds));
-  }
+  },[])
+ 
 
   return (
     <>
